@@ -11,12 +11,16 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.hamcrest.Matchers.containsString
 import java.nio.file.Files
 
 @SpringBootTest(
     properties = [
+        "demo.seedEnabled=false",
         "rag.indexPath=build/test-rag-index/\${random.uuid}",
         "rag.storeChunkText=true",
         "rag.uploadMaxBytes=32",
@@ -30,6 +34,41 @@ class RagControllerTest {
 
     @Autowired
     lateinit var objectMapper: ObjectMapper
+
+    @Test
+    fun `root path serves the bundled frontend`() {
+        mockMvc.perform(get("/"))
+            .andExpect(status().isOk)
+            .andExpect(forwardedUrl("/index.html"))
+    }
+
+    @Test
+    fun `bundled index html is exposed as a static resource`() {
+        mockMvc.perform(get("/index.html"))
+            .andExpect(status().isOk)
+            .andExpect(content().string(containsString("<!doctype html>")))
+    }
+
+    @Test
+    fun `nested frontend routes are forwarded to index`() {
+        mockMvc.perform(get("/workbench/search"))
+            .andExpect(status().isOk)
+            .andExpect(forwardedUrl("/index.html"))
+    }
+
+    @Test
+    fun `demo sample endpoint loads reusable docs`() {
+        mockMvc.perform(post("/api/rag/demo/load-sample"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("loaded"))
+            .andExpect(jsonPath("$.tenantId").value("tenant-web-demo"))
+            .andExpect(jsonPath("$.docIds").isArray)
+            .andExpect(jsonPath("$.docIds.length()").value(3))
+
+        mockMvc.perform(get("/api/rag/stats").param("tenantId", "tenant-web-demo"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.docs").value(3))
+    }
 
     @Test
     fun `ingest search and stats endpoints work`() {

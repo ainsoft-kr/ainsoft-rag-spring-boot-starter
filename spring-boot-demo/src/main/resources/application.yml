@@ -1,6 +1,9 @@
 server:
   port: 8080
 
+demo:
+  seedEnabled: true
+
 rag:
   indexPath: ./rag-index
   storeChunkText: true
