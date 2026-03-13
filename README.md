@@ -69,6 +69,23 @@ class SampleController(
 ./gradlew build
 ```
 
+## Local Maven Flow
+
+로컬 개발에서는 composite build 대신 `mavenLocal()` 소비를 사용합니다. 순서는 아래와 같습니다.
+
+```bash
+cd ../ainsoft-rag-engine
+./gradlew publishPublicModulesToMavenLocal
+
+cd ../ainsoft-rag-spring-boot-autoconfigure
+./gradlew publishToMavenLocal
+
+cd ../ainsoft-rag-spring-boot-starter
+./gradlew build
+```
+
+버전을 바꾸면 세 프로젝트의 `engineVersion`, `autoconfigureVersion`, `projectVersion`을 동일하게 맞춰야 합니다.
+
 ## Publishing
 
 snapshot:

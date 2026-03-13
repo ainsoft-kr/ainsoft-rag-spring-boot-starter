@@ -89,6 +89,18 @@ publishing {
                     ?: propertyOrEnv("ossrhPassword", "OSSRH_PASSWORD")
             }
         }
+
+        val githubRepository = propertyOrEnv("githubPackagesRepository", "GITHUB_REPOSITORY")
+        if (!githubRepository.isNullOrBlank()) {
+            maven {
+                name = "github"
+                url = uri("https://maven.pkg.github.com/$githubRepository")
+                credentials {
+                    username = propertyOrEnv("githubPackagesUsername", "GITHUB_ACTOR")
+                    password = propertyOrEnv("githubPackagesToken", "GITHUB_TOKEN")
+                }
+            }
+        }
     }
 
     publications {
@@ -168,6 +180,20 @@ tasks.register("publishPublicModule") {
     group = "publishing"
     description = "Publish the starter module to the configured Maven Central repository."
     dependsOn("publish")
+}
+
+tasks.register("publishSnapshotToGitHubPackages") {
+    group = "publishing"
+    description = "Publish the snapshot build to GitHub Packages."
+    val githubRepository = propertyOrEnv("githubPackagesRepository", "GITHUB_REPOSITORY")
+    if (!githubRepository.isNullOrBlank()) {
+        dependsOn("publishMavenPublicationToGithubRepository")
+    }
+    doFirst {
+        check(!githubRepository.isNullOrBlank()) {
+            "githubPackagesRepository or GITHUB_REPOSITORY must be set to publish snapshots to GitHub Packages"
+        }
+    }
 }
 
 tasks.register("uploadPublicReleaseToCentralPortal") {
