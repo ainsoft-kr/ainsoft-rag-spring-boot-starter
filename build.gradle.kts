@@ -18,6 +18,7 @@ plugins {
     `java-library`
     id("maven-publish")
     id("signing")
+    id("org.jetbrains.dokka") version "1.9.20"
     kotlin("jvm") version "2.3.0" apply false
     id("org.springframework.boot") version "3.3.2" apply false
     kotlin("plugin.spring") version "2.3.0" apply false
@@ -160,6 +161,8 @@ subprojects {
     }
 
     pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+        apply(plugin = "org.jetbrains.dokka")
+
         extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
             jvmToolchain(21)
         }
@@ -169,10 +172,39 @@ subprojects {
                 freeCompilerArgs.add("-Xjsr305=strict")
             }
         }
+
+        tasks.named("dokkaHtml").configure {
+            group = "documentation"
+        }
     }
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
+    }
+}
+
+val dokkaProjects = subprojects.filter { project ->
+    project.buildFile.exists() && project.file("src/main").exists()
+}
+
+tasks.named("dokkaHtml").configure {
+    group = "documentation"
+}
+
+tasks.register<Sync>("docs") {
+    group = "documentation"
+    description = "Generate Dokka HTML documentation for starter modules."
+    val dokkaTasks = dokkaProjects
+        .filter { it.pluginManager.hasPlugin("org.jetbrains.dokka") }
+        .map { "${it.path}:dokkaHtml" }
+    dependsOn(dokkaTasks)
+    into(layout.buildDirectory.dir("docs/dokka"))
+    dokkaProjects
+        .filter { it.pluginManager.hasPlugin("org.jetbrains.dokka") }
+        .forEach { project ->
+        from(project.layout.buildDirectory.dir("dokka/html")) {
+            into(project.name)
+        }
     }
 }
 

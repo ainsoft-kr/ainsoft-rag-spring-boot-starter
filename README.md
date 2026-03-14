@@ -103,6 +103,18 @@ rag:
 ./gradlew build
 ```
 
+## Docs
+
+Kotlin API 문서는 Dokka로 생성합니다.
+
+```bash
+./gradlew docs
+```
+
+생성 결과:
+
+- starter 멀티모듈: `build/docs/dokka/<module>/index.html`
+
 ## Local Maven Flow
 
 로컬 개발에서는 composite build 대신 `mavenLocal()` 소비를 사용합니다. 순서는 아래와 같습니다.
