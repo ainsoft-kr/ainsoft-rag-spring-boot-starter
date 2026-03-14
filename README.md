@@ -53,6 +53,40 @@ class SampleController(
 }
 ```
 
+## Admin UI
+
+웹 애플리케이션에서 `spring-boot-starter-web`이 함께 있으면 starter가 공통 관리자 UI와 운영 API를 자동 등록합니다.
+
+- UI: `/rag-admin`
+- API: `/api/rag/admin`
+
+설정 예시:
+
+```yaml
+rag:
+  admin:
+    enabled: true
+    basePath: /rag-admin
+    apiBasePath: /api/rag/admin
+    defaultRecentProviderWindowMillis: 60000
+```
+
+관리 화면에서 제공하는 기본 기능:
+
+- 텍스트/파일 ingest
+- 검색
+- 검색 진단
+- 인덱스 통계
+- provider health 조회
+
+관리 화면을 끄려면 아래처럼 설정합니다.
+
+```yaml
+rag:
+  admin:
+    enabled: false
+```
+
 ## Demo
 
 예제 애플리케이션은 [spring-boot-demo](/Users/ygpark2/pjt/ainsoft/rag/ainsoft-rag-spring-boot-starter/spring-boot-demo) 에 있습니다.

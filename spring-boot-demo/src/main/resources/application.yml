@@ -11,3 +11,8 @@ rag:
   sourceLoadTimeoutMillis: 10000
   chunkerType: basic
   embeddingDimensions: 256
+  admin:
+    enabled: true
+    basePath: /rag-admin
+    apiBasePath: /api/rag/admin
+    defaultRecentProviderWindowMillis: 60000

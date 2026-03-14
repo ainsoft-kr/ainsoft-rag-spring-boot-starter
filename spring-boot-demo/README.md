@@ -10,6 +10,7 @@
 
 앱을 실행한 뒤 브라우저에서 `http://localhost:8080`으로 접속하면 SvelteKit 기반 데모 UI를 사용할 수 있습니다.
 기본 설정에서는 애플리케이션 시작 시 샘플 문서 3개를 자동으로 색인합니다.
+starter에 포함된 공통 관리자 UI도 함께 열리며 `http://localhost:8080/rag-admin`에서 접근할 수 있습니다.
 
 ## Dependency
 
@@ -28,6 +29,12 @@ implementation("com.ainsoft.rag:parsers-api:0.1.0")
 - `POST /api/rag/diagnose-search`
 - `GET /api/rag/stats`
 - `GET /api/rag/provider-health`
+- `POST /api/rag/admin/ingest`
+- `POST /api/rag/admin/ingest-file`
+- `POST /api/rag/admin/search`
+- `POST /api/rag/admin/diagnose-search`
+- `GET /api/rag/admin/stats`
+- `GET /api/rag/admin/provider-health`
 
 실제 설정 예시는 `src/main/resources/application.yml`에 있습니다.
 
