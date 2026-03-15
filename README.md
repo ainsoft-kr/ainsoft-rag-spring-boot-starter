@@ -2,6 +2,8 @@
 
 `ainsoft-rag-spring-boot-starter`는 Ainsoft RAG 엔진을 Spring Boot 애플리케이션에서 바로 사용할 수 있게 해 주는 starter입니다.
 
+이 starter는 "검색 엔진 라이브러리를 추가하는 의존성"이라기보다, Spring Boot 애플리케이션 안에 embedded RAG와 운영 콘솔을 빠르게 포함시키는 진입점입니다.
+
 이 starter는 다음 모듈을 전이 의존성으로 가져옵니다.
 
 - `ainsoft-rag-spring-boot-autoconfigure`
@@ -11,6 +13,15 @@
 - `stats-cache-spi`
 - `stats-cache-file`
 - 필요 시 `reranker-onnx`
+
+## When To Use It
+
+starter는 아래와 같은 경우에 가장 적합합니다.
+
+- 내부 포털, 관리자 시스템, 사내 업무 도구에 검색을 내장할 때
+- 외부 검색 인프라보다 애플리케이션 내부 통합을 우선할 때
+- tenant/ACL 기반 문서 검색을 서비스 코드와 함께 운영할 때
+- 운영 팀이 `/rag-admin`에서 ingest, diagnostics, index ops를 직접 다뤄야 할 때
 
 ## Maven Coordinate
 
@@ -39,6 +50,14 @@ rag:
   chunkerType: basic
 ```
 
+위 설정만으로도 다음 구성이 기본 활성화됩니다.
+
+- Lucene 기반 local index
+- heuristic embedding/hash provider
+- 기본 chunking
+- `RagEngine` 빈
+- servlet 웹 애플리케이션인 경우 admin UI/API 자동 등록
+
 ```kotlin
 import com.ainsoft.rag.api.RagEngine
 import org.springframework.web.bind.annotation.GetMapping
@@ -52,6 +71,48 @@ class SampleController(
     fun health(): Map<String, Any> = mapOf("docs" to ragEngine.stats().docs)
 }
 ```
+
+## Recommended Production-Oriented Configuration
+
+운영형 애플리케이션에서는 아래와 같이 품질 제어와 운영 export를 같이 설정하는 편이 일반적입니다.
+
+```yaml
+rag:
+  indexPath: ./rag-index
+  embeddingProvider: openai
+  openAiModel: text-embedding-3-small
+  chunkerType: sliding
+  slidingWindowSize: 240
+  slidingOverlap: 40
+  contextualRetrievalEnabled: true
+  rerankerEnabled: true
+  rerankerType: heuristic
+  rerankerTopN: 24
+  correctiveRetrievalEnabled: true
+  correctiveMinConfidence: 0.08
+  queryRewriteEnabled: true
+  queryRewriterType: heuristic
+  hierarchicalSummariesEnabled: true
+  statsCacheStoreType: file
+  statsCacheFilePath: ./rag-index/stats-cache.json
+  providerHealthAutoExportIntervalMillis: 10000
+  providerHealthAutoExportWindowMillis: 60000
+```
+
+외부 provider를 쓰지 않는 온프레미스 환경에서는 `embeddingProvider: hash`, `rerankerType: heuristic`, `summarizerType: rule-based` 조합으로 시작한 뒤, 품질 요구가 높아질 때 provider 기반 설정을 추가하는 방식이 현실적입니다.
+
+## Retrieval and Security Characteristics
+
+starter를 통해 등록되는 엔진은 아래 특징을 그대로 가집니다.
+
+- hybrid retrieval
+- corrective retrieval
+- optional query rewrite
+- reranker
+- hierarchical summaries
+- tenant + ACL filter query
+
+즉, 검색 결과 보안은 애플리케이션 컨트롤러 후처리가 아니라 엔진 query 구성 단계에서 반영됩니다.
 
 ## Admin UI
 
@@ -79,6 +140,17 @@ rag:
 - 인덱스 통계
 - provider health 조회
 
+실제 운영 관점에서는 아래 화면들이 함께 제공됩니다.
+
+- documents browser / source preview
+- provider history
+- search audit
+- job history
+- tenants & index operations
+- config
+- access & security
+- bulk operations
+
 관리 화면을 끄려면 아래처럼 설정합니다.
 
 ```yaml
@@ -86,6 +158,51 @@ rag:
   admin:
     enabled: false
 ```
+
+보안이 필요한 경우 feature-role 기반 정책을 함께 설정할 수 있습니다.
+
+```yaml
+rag:
+  admin:
+    enabled: true
+    security:
+      enabled: true
+      tokenHeaderName: X-Rag-Admin-Token
+      tokens:
+        admin-token: ADMIN
+        ops-token: OPS
+        audit-token: AUDITOR
+```
+
+## Minimal Search Endpoint Example
+
+애플리케이션에서 보통은 `tenantId`와 `principals`를 명시해 검색을 호출합니다.
+
+```kotlin
+import com.ainsoft.rag.api.RagEngine
+import com.ainsoft.rag.api.SearchRequest
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+class SearchController(
+    private val ragEngine: RagEngine
+) {
+    @GetMapping("/api/search")
+    fun search(@RequestParam q: String): Any =
+        ragEngine.search(
+            SearchRequest(
+                tenantId = "tenant-admin",
+                principals = listOf("user:1", "group:ops"),
+                query = q,
+                topK = 5
+            )
+        )
+}
+```
+
+이 방식은 tenant와 ACL principal을 함께 전달하는 Ainsoft RAG의 기본 사용 패턴을 보여줍니다.
 
 ## Demo
 
