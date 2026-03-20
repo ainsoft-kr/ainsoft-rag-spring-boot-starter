@@ -6,6 +6,8 @@
 
 현재 이 모듈은 Spring Boot `4.0.4`와 JDK `24` 조합으로 검증합니다.
 
+`llm.*` 공통 설정도 함께 사용할 수 있습니다. 새 설정이 있으면 이를 우선 사용하고, 없으면 기존 `rag.queryRewrite*`, `rag.summarizer*`, `rag.openAi*`로 fallback 합니다.
+
 이 starter는 다음 모듈을 전이 의존성으로 가져옵니다.
 
 - `ainsoft-rag-spring-boot-autoconfigure`
@@ -52,6 +54,35 @@ rag:
   chunkerType: basic
 ```
 
+LLM API를 함께 쓰는 예시:
+
+```yaml
+llm:
+  defaultProvider: openai
+  providers:
+    openai:
+      kind: openai-compatible
+      baseUrl: https://api.openai.com/v1
+      apiKey: ${OPENAI_API_KEY}
+      model: gpt-4o-mini
+    gemini:
+      kind: gemini
+      baseUrl: https://generativelanguage.googleapis.com/v1beta/models
+      apiKey: ${GEMINI_API_KEY}
+      model: gemini-2.0-flash
+    anthropic:
+      kind: anthropic
+      baseUrl: https://api.anthropic.com/v1
+      apiKey: ${ANTHROPIC_API_KEY}
+      model: claude-3-5-sonnet-latest
+  queryRewrite:
+    provider: openai
+    model: gpt-4o-mini
+  summarizer:
+    provider: openai
+    model: gpt-4o-mini
+```
+
 위 설정만으로도 다음 구성이 기본 활성화됩니다.
 
 - Lucene 기반 local index
@@ -83,6 +114,20 @@ rag:
   indexPath: ./rag-index
   embeddingProvider: openai
   openAiModel: text-embedding-3-small
+llm:
+  defaultProvider: openai
+  providers:
+    openai:
+      kind: openai-compatible
+      baseUrl: https://api.openai.com/v1
+      apiKey: ${OPENAI_API_KEY}
+      model: gpt-4o-mini
+  queryRewrite:
+    provider: openai
+    model: gpt-4o-mini
+  summarizer:
+    provider: openai
+    model: gpt-4o-mini
   chunkerType: sliding
   slidingWindowSize: 240
   slidingOverlap: 40
@@ -102,6 +147,9 @@ rag:
 ```
 
 외부 provider를 쓰지 않는 온프레미스 환경에서는 `embeddingProvider: hash`, `rerankerType: heuristic`, `summarizerType: rule-based` 조합으로 시작한 뒤, 품질 요구가 높아질 때 provider 기반 설정을 추가하는 방식이 현실적입니다.
+
+지원하는 LLM provider kind는 `openai-compatible`, `openai`, `anthropic`, `claude`, `gemini`, `google-gemini`, `vertex`, `vertex-ai`, `vertex-gemini`입니다.
+`vertex*` 계열은 프로젝트/리전별 base URL을 명시해 주는 편이 안전합니다.
 
 ## Retrieval and Security Characteristics
 

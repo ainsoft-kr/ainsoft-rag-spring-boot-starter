@@ -53,6 +53,8 @@ npm run dev
 Gradle `bootRun`, `bootJar`, `processResources`는 프론트엔드를 자동으로 빌드한 뒤 Spring Boot 정적 리소스로 포함합니다.
 백엔드 작업만 빠르게 검증할 때는 `-PskipFrontendBuild=true` 로 프론트 재빌드를 생략할 수 있습니다.
 
+LLM 답변 생성이나 query rewrite/summarizer 연결이 필요하면 `src/main/resources/application.yml`의 `llm.*` 섹션을 참고하세요.
+
 ## E2E
 
 Playwright 스모크 테스트:

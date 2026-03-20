@@ -1,30 +1,31 @@
 package com.ainsoft.rag.demo
 
+import com.ainsoft.rag.api.LlmProviderConfig
 import com.ainsoft.rag.api.SearchResponse
+import com.ainsoft.rag.api.TextGenerationProvider
+import com.ainsoft.rag.api.TextGenerationProviderFactory
+import com.ainsoft.rag.spring.LlmProperties
 import com.ainsoft.rag.spring.RagProperties
-import com.fasterxml.jackson.databind.ObjectMapper
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.nio.charset.StandardCharsets
-import java.time.Duration
 import org.springframework.stereotype.Service
 
 @Service
 class RagAnswerService(
-    private val properties: RagProperties
+    private val properties: RagProperties,
+    private val llmProperties: LlmProperties,
+    private val textGenerationProviderFactory: TextGenerationProviderFactory
 ) {
-    private val openAiClient by lazy {
-        val apiKey = resolveApiKey(properties.summarizerApiKey, "OPENAI_API_KEY")
-            ?: return@lazy null
-        if (properties.summarizerType.trim().lowercase() != "openai-compatible") return@lazy null
-        OpenAiCompatibleTextClient(
-            baseUrl = properties.summarizerApiBaseUrl,
-            apiKey = apiKey,
-            model = properties.summarizerModel,
-            requestTimeoutMillis = properties.summarizerRequestTimeoutMillis
-        )
+    private data class ProviderSelection(
+        val config: LlmProviderConfig,
+        val provider: TextGenerationProvider
+    )
+
+    private val selectedProvider by lazy {
+        resolveAnswerProviderConfig()?.let { config ->
+            ProviderSelection(
+                config = config,
+                provider = textGenerationProviderFactory.create(config)
+            )
+        }
     }
 
     fun answer(request: AnswerApiRequest, searchResponse: SearchResponse): AnswerApiResponse {
@@ -75,8 +76,8 @@ class RagAnswerService(
         context: String,
         citations: List<AnswerCitation>
     ): AnswerGenerationResult {
-        val client = openAiClient
-        if (client == null) {
+        val selection = selectedProvider
+        if (selection == null) {
             return AnswerGenerationResult(
                 answer = buildHeuristicAnswer(question, context, citations),
                 mode = "heuristic",
@@ -87,7 +88,7 @@ class RagAnswerService(
         }
 
         return try {
-            val answer = client.complete(
+            val answer = selection.provider.complete(
                 systemPrompt = "You answer questions using only the provided context. If the context is insufficient, say so. Keep the answer concise and factual. Cite sources inline using square brackets like [1], [2] and only use numbers from the provided citations.",
                 userPrompt = buildString {
                     appendLine("Question:")
@@ -120,15 +121,15 @@ class RagAnswerService(
                     mode = "heuristic",
                     fallbackApplied = true,
                     fallbackReason = "empty_model_response",
-                    usedModel = properties.summarizerModel
+                    usedModel = selection.config.model
                 )
             } else {
                 AnswerGenerationResult(
                     answer = answer,
-                    mode = "openai-compatible",
+                    mode = selection.config.kind,
                     fallbackApplied = false,
                     fallbackReason = null,
-                    usedModel = properties.summarizerModel
+                    usedModel = selection.config.model
                 )
             }
         } catch (ex: Exception) {
@@ -137,9 +138,25 @@ class RagAnswerService(
                 mode = "heuristic",
                 fallbackApplied = true,
                 fallbackReason = ex.message ?: ex::class.simpleName,
-                usedModel = properties.summarizerModel
+                usedModel = selection.config.model
             )
         }
+    }
+
+    private fun resolveAnswerProviderConfig(): LlmProviderConfig? {
+        llmProperties.resolveSummarizer()?.let { return it }
+
+        val legacyType = properties.summarizerType.trim().lowercase()
+        if (legacyType != "openai-compatible" && legacyType != "openai") return null
+
+        val apiKey = resolveApiKey(properties.summarizerApiKey, "OPENAI_API_KEY") ?: return null
+        return LlmProviderConfig(
+            kind = "openai-compatible",
+            baseUrl = properties.summarizerApiBaseUrl,
+            apiKey = apiKey,
+            model = properties.summarizerModel,
+            requestTimeoutMillis = properties.summarizerRequestTimeoutMillis
+        )
     }
 
     private fun buildContext(question: String, hits: List<com.ainsoft.rag.api.SearchHit>): String {
@@ -299,49 +316,3 @@ private data class AnswerGenerationResult(
     val fallbackReason: String?,
     val usedModel: String?
 )
-
-private class OpenAiCompatibleTextClient(
-    baseUrl: String,
-    private val apiKey: String,
-    private val model: String,
-    requestTimeoutMillis: Long
-) {
-    private val mapper = ObjectMapper()
-    private val rootUri = URI.create(baseUrl.trimEnd('/') + "/")
-    private val client: HttpClient = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofMillis(requestTimeoutMillis))
-        .build()
-    private val timeout = Duration.ofMillis(requestTimeoutMillis)
-
-    fun complete(systemPrompt: String, userPrompt: String): String {
-        val requestBody = mapOf(
-            "model" to model,
-            "messages" to listOf(
-                mapOf("role" to "system", "content" to systemPrompt),
-                mapOf("role" to "user", "content" to userPrompt)
-            ),
-            "temperature" to 0.1
-        )
-        val endpoint = rootUri.resolve("chat/completions")
-        val response = client.send(
-            HttpRequest.newBuilder(endpoint)
-                .timeout(timeout)
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer $apiKey")
-                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(requestBody), StandardCharsets.UTF_8))
-                .build(),
-            HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
-        )
-        if (response.statusCode() !in 200..299) {
-            error("OpenAI-compatible answer request failed: status=${response.statusCode()} body=${response.body().replace('\n', ' ').take(400)}")
-        }
-        val choices = mapper.readTree(response.body()).path("choices")
-        val firstChoice = choices.takeIf { it.isArray && it.size() > 0 }?.get(0)
-        return firstChoice
-            ?.path("message")
-            ?.path("content")
-            ?.asText()
-            ?.trim()
-            .orEmpty()
-    }
-}
