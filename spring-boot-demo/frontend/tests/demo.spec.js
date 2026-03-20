@@ -11,6 +11,16 @@ test('loads sample data and shows search hits', async ({ page }) => {
 
   await expect(page.getByTestId('search-results')).toBeVisible();
   await expect(page.getByTestId('search-hit').first()).toContainText('retrieval');
+
+  await page.getByTestId('answer-submit').click();
+  await expect(page.getByTestId('answer-panel')).toContainText('answer-v1');
+  await expect(page.getByTestId('answer-panel')).toContainText('Sentence 1');
+  await page.getByRole('button', { name: '[1]' }).first().click();
+  await expect(page.locator('#citation-1')).toHaveClass(/selected/);
+
+  await page.getByTestId('answer-stream-submit').click();
+  await expect(page.getByTestId('answer-stream-panel')).toContainText('meta');
+  await expect(page.getByTestId('answer-stream-panel')).toContainText('sentence');
 });
 
 test('uploads a file and retrieves it through search', async ({ page }) => {

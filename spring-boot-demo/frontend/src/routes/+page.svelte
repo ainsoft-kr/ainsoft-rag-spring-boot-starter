@@ -64,6 +64,8 @@
     ingest: false,
     upload: false,
     search: false,
+    answer: false,
+    answerStream: false,
     diagnose: false,
     stats: false,
     health: false
@@ -77,6 +79,9 @@
   };
   let ingestResponse = null;
   let searchResponse = null;
+  let answerResponse = null;
+  let answerStreamEvents = [];
+  let selectedCitationIndex = null;
   let diagnoseResponse = null;
   let statsResponse = null;
   let healthResponse = null;
@@ -112,6 +117,79 @@
 
   function setLoading(key, value) {
     loading = { ...loading, [key]: value };
+  }
+
+  function buildSearchPayload() {
+    return {
+      tenantId: searchForm.tenantId,
+      principals: toList(searchForm.principals),
+      query: searchForm.query,
+      topK: Number(searchForm.topK),
+      filter: toMap(searchForm.filter),
+      providerHealthDetail: true,
+      recentProviderWindowMillis: Number(searchForm.recentProviderWindowMillis)
+    };
+  }
+
+  function splitSseBlock(block) {
+    const lines = block
+      .split(/\r?\n/)
+      .map((line) => line.trimEnd())
+      .filter(Boolean);
+    const event = { event: 'message', data: [] };
+
+    for (const line of lines) {
+      if (line.startsWith('event:')) {
+        event.event = line.slice(6).trim() || 'message';
+      } else if (line.startsWith('data:')) {
+        event.data.push(line.slice(5).trimStart());
+      }
+    }
+
+    return event.data.length ? { event: event.event, data: event.data.join('\n') } : null;
+  }
+
+  function focusCitation(index) {
+    selectedCitationIndex = index;
+    const element = document.getElementById(`citation-${index}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  async function readSseResponse(response, onEvent) {
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('Streaming response body is not available.');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let currentBlock = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const chunks = buffer.split(/\r?\n/);
+      buffer = chunks.pop() ?? '';
+
+      for (const line of chunks) {
+        if (line === '') {
+          const parsed = splitSseBlock(currentBlock);
+          if (parsed) onEvent(parsed);
+          currentBlock = '';
+        } else {
+          currentBlock += `${line}\n`;
+        }
+      }
+    }
+
+    buffer += decoder.decode();
+    const tail = [currentBlock, buffer].filter(Boolean).join('\n');
+    const parsed = splitSseBlock(tail);
+    if (parsed) onEvent(parsed);
   }
 
   async function withStatus(key, successMessage, job) {
@@ -203,16 +281,55 @@
   async function submitSearch() {
     searchResponse = await withStatus('search', '검색 결과를 갱신했습니다.', () =>
       apiPost('/api/rag/search', {
-        tenantId: searchForm.tenantId,
-        principals: toList(searchForm.principals),
-        query: searchForm.query,
-        topK: Number(searchForm.topK),
-        filter: toMap(searchForm.filter),
-        openSource: searchForm.openSource,
-        providerHealthDetail: true,
-        recentProviderWindowMillis: Number(searchForm.recentProviderWindowMillis)
+        ...buildSearchPayload(),
+        openSource: searchForm.openSource
       })
     );
+  }
+
+  async function submitAnswer() {
+    answerResponse = await withStatus('answer', '답변을 생성했습니다.', () =>
+      apiPost('/api/rag/answer', buildSearchPayload())
+    );
+    selectedCitationIndex = null;
+  }
+
+  async function submitAnswerStream() {
+    setLoading('answerStream', true);
+    answerStreamEvents = [];
+    try {
+      const response = await fetch('/api/rag/answer/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(buildSearchPayload())
+      });
+
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!response.ok) {
+        const payload = contentType.includes('application/json') ? await response.json() : await response.text();
+        const message =
+          (typeof payload === 'object' && payload !== null && 'message' in payload && payload.message) ||
+          response.statusText ||
+          'Request failed';
+        throw new Error(String(message));
+      }
+
+      if (!contentType.includes('text/event-stream')) {
+        throw new Error('Streaming response was not text/event-stream.');
+      }
+
+      await readSseResponse(response, (event) => {
+        answerStreamEvents = [...answerStreamEvents, { id: crypto.randomUUID(), ...event }];
+      });
+      pushNotice('success', '스트리밍 답변을 수신했습니다.');
+    } catch (error) {
+      pushNotice('error', error instanceof Error ? error.message : 'Unexpected error');
+      throw error;
+    } finally {
+      setLoading('answerStream', false);
+    }
   }
 
   async function runDiagnostics() {
@@ -430,6 +547,17 @@
             <button data-testid="search-submit" disabled={loading.search} on:click={submitSearch}>
               {loading.search ? '검색 중...' : 'Search'}
             </button>
+            <button data-testid="answer-submit" disabled={loading.answer} on:click={submitAnswer}>
+              {loading.answer ? '생성 중...' : 'Answer'}
+            </button>
+            <button
+              class="ghost"
+              data-testid="answer-stream-submit"
+              disabled={loading.answerStream}
+              on:click={submitAnswerStream}
+            >
+              {loading.answerStream ? '스트리밍 중...' : 'Stream'}
+            </button>
             <button
               class="ghost"
               data-testid="diagnose-submit"
@@ -539,6 +667,115 @@
           </dl>
         {:else}
           <p class="empty">아직 색인 요청이 없습니다.</p>
+        {/if}
+      </article>
+
+      <article class="panel result-panel" data-testid="answer-panel">
+        <div class="panel-header">
+          <h2>답변</h2>
+          <span class="pill">{answerResponse?.schemaVersion ?? 'idle'}</span>
+        </div>
+
+        {#if answerResponse}
+          <section class="answer-block">
+            <p class="answer-lead">{answerResponse.answer.text}</p>
+
+            {#if answerResponse.answer.sentences?.length}
+              <div class="sentence-list">
+                {#each answerResponse.answer.sentences as sentence}
+                  <article class="sentence-card">
+                    <div class="hit-topline">
+                      <strong>Sentence {sentence.index}</strong>
+                      {#if sentence.citationIndexes.length}
+                        <div class="citation-pills">
+                          {#each sentence.citationIndexes as citationIndex}
+                            <button
+                              type="button"
+                              class="citation-pill"
+                              on:click={() => focusCitation(citationIndex)}
+                            >
+                              [{citationIndex}]
+                            </button>
+                          {/each}
+                        </div>
+                      {:else}
+                        <span>uncited</span>
+                      {/if}
+                    </div>
+                    <p>{sentence.text}</p>
+                  </article>
+                {/each}
+              </div>
+            {/if}
+
+            {#if answerResponse.citations?.length}
+              <div class="citation-list">
+                {#each answerResponse.citations as citation}
+                  <article
+                    class:selected={selectedCitationIndex === citation.index}
+                    class="citation-card"
+                    id={`citation-${citation.index}`}
+                  >
+                    <div class="hit-topline">
+                      <strong>[{citation.index}] {citation.docId}</strong>
+                      <span>{citation.score.toFixed(4)}</span>
+                    </div>
+                    <p>{citation.sourceSnippet ?? 'snippet unavailable'}</p>
+                    <div class="tag-row">
+                      <span>{citation.chunkId}</span>
+                      {#if citation.sourceUri}
+                        <span>{citation.sourceUri}</span>
+                      {/if}
+                      <span>{citation.contentKind}</span>
+                    </div>
+                  </article>
+                {/each}
+              </div>
+            {/if}
+
+            <div class="metric-list answer-meta">
+              <div>
+                <span>Mode</span>
+                <strong>{answerResponse.meta.answerMode}</strong>
+              </div>
+              <div>
+                <span>Selected</span>
+                <strong>{answerResponse.meta.selectedCount}</strong>
+              </div>
+              <div>
+                <span>Fallback</span>
+                <strong>{answerResponse.meta.fallbackApplied ? 'yes' : 'no'}</strong>
+              </div>
+              <div>
+                <span>Model</span>
+                <strong>{answerResponse.meta.usedModel ?? 'none'}</strong>
+              </div>
+            </div>
+          </section>
+        {:else}
+          <p class="empty">Answer 버튼을 누르면 구조화된 답변이 표시됩니다.</p>
+        {/if}
+      </article>
+
+      <article class="panel result-panel" data-testid="answer-stream-panel">
+        <div class="panel-header">
+          <h2>Answer Stream</h2>
+          <span class="pill">{answerStreamEvents.length} events</span>
+        </div>
+
+        {#if answerStreamEvents.length}
+          <div class="stream-list">
+            {#each answerStreamEvents as event}
+              <article class="stream-event">
+                <div class="hit-topline">
+                  <strong>{event.event}</strong>
+                </div>
+                <pre>{event.data}</pre>
+              </article>
+            {/each}
+          </div>
+        {:else}
+          <p class="empty">Stream 버튼을 누르면 SSE 이벤트가 여기에 표시됩니다.</p>
         {/if}
       </article>
 
@@ -1006,6 +1243,66 @@
     margin: 8px 0 0;
     display: block;
     font-size: 1.1rem;
+  }
+
+  .answer-block,
+  .sentence-list,
+  .citation-list,
+  .stream-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .answer-lead {
+    margin: 0;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(17, 27, 38, 0.06);
+    line-height: 1.65;
+    white-space: pre-wrap;
+  }
+
+  .sentence-card,
+  .citation-card,
+  .stream-event {
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(23, 36, 48, 0.08);
+  }
+
+  .citation-card.selected {
+    border-color: rgba(29, 92, 149, 0.42);
+    box-shadow: 0 0 0 4px rgba(29, 92, 149, 0.12);
+  }
+
+  .citation-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .citation-pill {
+    border: 1px solid rgba(17, 27, 38, 0.12);
+    background: rgba(17, 27, 38, 0.04);
+    color: #10202f;
+    padding: 6px 10px;
+    min-height: 0;
+    font-size: 0.78rem;
+  }
+
+  .citation-pill:hover:enabled {
+    box-shadow: none;
+    transform: translateY(-1px);
+  }
+
+  .stream-event pre {
+    margin: 10px 0 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.82rem;
   }
 
   .hit-list {

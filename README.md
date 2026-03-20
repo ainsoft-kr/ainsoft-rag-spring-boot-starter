@@ -4,6 +4,8 @@
 
 이 starter는 "검색 엔진 라이브러리를 추가하는 의존성"이라기보다, Spring Boot 애플리케이션 안에 embedded RAG와 운영 콘솔을 빠르게 포함시키는 진입점입니다.
 
+현재 이 모듈은 Spring Boot `4.0.4`와 JDK `24` 조합으로 검증합니다.
+
 이 starter는 다음 모듈을 전이 의존성으로 가져옵니다.
 
 - `ainsoft-rag-spring-boot-autoconfigure`

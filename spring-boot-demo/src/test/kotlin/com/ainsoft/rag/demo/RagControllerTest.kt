@@ -1,9 +1,9 @@
 package com.ainsoft.rag.demo
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
@@ -14,11 +14,16 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.request
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.hamcrest.Matchers.containsString
 import java.nio.file.Files
+import org.springframework.web.context.WebApplicationContext
 
 @SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
     properties = [
         "demo.seedEnabled=false",
         "rag.indexPath=build/test-rag-index/\${random.uuid}",
@@ -27,13 +32,18 @@ import java.nio.file.Files
         "rag.sourceLoadAllowHosts[0]=127.0.0.1"
     ]
 )
-@AutoConfigureMockMvc
 class RagControllerTest {
     @Autowired
+    lateinit var webApplicationContext: WebApplicationContext
+
+    private val objectMapper = ObjectMapper()
+
     lateinit var mockMvc: MockMvc
 
-    @Autowired
-    lateinit var objectMapper: ObjectMapper
+    @BeforeEach
+    fun setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+    }
 
     @Test
     fun `root path serves the bundled frontend`() {
@@ -115,6 +125,46 @@ class RagControllerTest {
             .andExpect(jsonPath("$.meta.providerTelemetryDelta.requestDelta").isNumber)
             .andExpect(jsonPath("$.meta.providerTenantScopeDeltas").isArray)
             .andExpect(jsonPath("$.meta.providerCommandScopeDeltas").isArray)
+
+        val answerBody = AnswerApiRequest(
+            tenantId = "tenant-demo",
+            principals = listOf("group:demo"),
+            query = "search",
+            topK = 5
+        )
+
+        mockMvc.perform(
+            post("/api/rag/answer")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(answerBody))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.schemaVersion").value("answer-v1"))
+            .andExpect(jsonPath("$.tenantId").value("tenant-demo"))
+            .andExpect(jsonPath("$.answer.text").exists())
+            .andExpect(jsonPath("$.answer.text").value(containsString("[1]")))
+            .andExpect(jsonPath("$.answer.text").value(containsString("demo api text for search")))
+            .andExpect(jsonPath("$.answer.sentences[0].index").value(1))
+            .andExpect(jsonPath("$.answer.sentences[0].citationIndexes[0]").value(1))
+            .andExpect(jsonPath("$.citations[0].docId").value("demo-1"))
+            .andExpect(jsonPath("$.citations[0].sourceSnippet").exists())
+            .andExpect(jsonPath("$.meta.retrievedCount").value(1))
+            .andExpect(jsonPath("$.meta.answerMode").value("heuristic"))
+
+        val streamResult = mockMvc.perform(
+            post("/api/rag/answer/stream")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(answerBody))
+        )
+            .andExpect(request().asyncStarted())
+            .andReturn()
+
+        mockMvc.perform(asyncDispatch(streamResult))
+            .andExpect(status().isOk)
+            .andExpect(content().string(containsString("event:meta")))
+            .andExpect(content().string(containsString("event:citation")))
+            .andExpect(content().string(containsString("event:sentence")))
+            .andExpect(content().string(containsString("event:done")))
 
         mockMvc.perform(get("/api/rag/stats").param("tenantId", "tenant-demo"))
             .andExpect(status().isOk)

@@ -2,6 +2,7 @@ import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 import org.gradle.plugins.signing.SigningExtension
@@ -9,6 +10,7 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.util.Base64
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 fun Project.propertyOrEnv(propertyName: String, envName: String): String? =
     (findProperty(propertyName) as String?)?.takeIf { it.isNotBlank() }
@@ -20,7 +22,7 @@ plugins {
     id("signing")
     id("org.jetbrains.dokka") version "1.9.20"
     kotlin("jvm") version "2.3.0" apply false
-    id("org.springframework.boot") version "3.3.2" apply false
+    id("org.springframework.boot") version "4.0.4" apply false
     kotlin("plugin.spring") version "2.3.0" apply false
 }
 
@@ -29,7 +31,7 @@ version = (findProperty("projectVersion") as String?) ?: "0.1.0-SNAPSHOT"
 
 val engineVersion = (findProperty("engineVersion") as String?) ?: version.toString()
 val autoconfigureVersion = (findProperty("autoconfigureVersion") as String?) ?: version.toString()
-val springBootVersion = "3.3.2"
+val springBootVersion = "4.0.4"
 
 repositories {
     mavenLocal()
@@ -164,13 +166,18 @@ subprojects {
         apply(plugin = "org.jetbrains.dokka")
 
         extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
-            jvmToolchain(21)
+            jvmToolchain(24)
         }
 
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
             compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_24)
                 freeCompilerArgs.add("-Xjsr305=strict")
             }
+        }
+
+        tasks.withType<JavaCompile>().configureEach {
+            options.release.set(24)
         }
 
         tasks.named("dokkaHtml").configure {

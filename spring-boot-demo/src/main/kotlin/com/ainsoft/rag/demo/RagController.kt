@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.nio.charset.Charset
 import java.time.Instant
 
@@ -31,7 +32,8 @@ class RagController(
     private val engine: RagEngine,
     private val properties: RagProperties,
     private val ragConfig: RagConfig,
-    private val embeddingProvider: EmbeddingProvider
+    private val embeddingProvider: EmbeddingProvider,
+    private val ragAnswerService: RagAnswerService
 ) {
     private val plainTextParser = PlainTextParser()
     private val tikaDocumentParser = TikaDocumentParser()
@@ -195,6 +197,78 @@ class RagController(
                 providerCommandScopeDeltas = recentProviderHealth?.let { providerScopeDeltas("command", globalProviderHealth.commandScopes, it.commandScopes) }.orEmpty()
             )
         )
+    }
+
+    @PostMapping("/answer")
+    fun answer(@RequestBody request: AnswerApiRequest): AnswerApiResponse {
+        require(request.principals.isNotEmpty()) { "principals must not be empty" }
+        require(request.query.isNotBlank()) { "query must not be blank" }
+        val searchResponse = engine.searchDetailed(
+            SearchRequest(
+                tenantId = request.tenantId,
+                principals = request.principals,
+                query = request.query,
+                topK = request.topK,
+                filter = request.filter
+            )
+        )
+        return ragAnswerService.answer(request, searchResponse)
+    }
+
+    @PostMapping(
+        "/answer/stream",
+        produces = [MediaType.TEXT_EVENT_STREAM_VALUE]
+    )
+    fun answerStream(@RequestBody request: AnswerApiRequest): SseEmitter {
+        val emitter = SseEmitter(0L)
+        try {
+            val searchResponse = engine.searchDetailed(
+                SearchRequest(
+                    tenantId = request.tenantId,
+                    principals = request.principals,
+                    query = request.query,
+                    topK = request.topK,
+                    filter = request.filter
+                )
+            )
+            val answer = ragAnswerService.answer(request, searchResponse)
+
+            emitter.send(
+                SseEmitter.event()
+                    .name("meta")
+                    .data(
+                        mapOf(
+                            "schemaVersion" to answer.schemaVersion,
+                            "tenantId" to answer.tenantId,
+                            "query" to answer.query,
+                            "meta" to answer.meta
+                        )
+                    )
+            )
+            answer.citations.forEach { citation ->
+                emitter.send(
+                    SseEmitter.event()
+                        .name("citation")
+                        .data(citation)
+                )
+            }
+            answer.answer.sentences.forEach { sentence ->
+                emitter.send(
+                    SseEmitter.event()
+                        .name("sentence")
+                        .data(sentence)
+                )
+            }
+            emitter.send(
+                SseEmitter.event()
+                    .name("done")
+                    .data(mapOf("status" to "done"))
+            )
+            emitter.complete()
+        } catch (ex: Exception) {
+            emitter.completeWithError(ex)
+        }
+        return emitter
     }
 
     @PostMapping("/diagnose-search")

@@ -2,6 +2,8 @@
 
 `spring-boot-demo`는 `ainsoft-rag-spring-boot-starter` 사용 예제입니다.
 
+Boot 4 기준 테스트는 `MockMvcBuilders.webAppContextSetup(...)` 방식으로 웹 컨텍스트를 직접 구성해 검증합니다.
+
 ## Run
 
 ```bash
