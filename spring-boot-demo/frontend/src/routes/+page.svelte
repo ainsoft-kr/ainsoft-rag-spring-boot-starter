@@ -1345,7 +1345,7 @@
         </div>
       </div>
     {:else if activeTab === 'search'}
-      <div class="tab-layout">
+      <div class="tab-layout search-layout">
         <div class="controls">
           <article class="panel">
             <div class="panel-header">
@@ -1967,6 +1967,10 @@
     grid-template-columns: 0.95fr 1.05fr;
     gap: 22px;
     align-items: stretch;
+  }
+
+  .tab-layout.search-layout {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
   }
 
   .controls,
