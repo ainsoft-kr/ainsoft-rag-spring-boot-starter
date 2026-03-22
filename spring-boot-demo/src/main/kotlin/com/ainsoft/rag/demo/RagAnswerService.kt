@@ -29,7 +29,8 @@ class RagAnswerService(
     }
 
     fun answer(request: AnswerApiRequest, searchResponse: SearchResponse): AnswerApiResponse {
-        val selectedHits = searchResponse.hits.take(maxOf(1, request.topK))
+        val selectedTopK = maxOf(1, request.topK ?: 8)
+        val selectedHits = searchResponse.hits.take(selectedTopK)
         val citations = selectedHits.mapIndexed { index, hit ->
             AnswerCitation(
                 index = index + 1,
@@ -271,7 +272,7 @@ data class AnswerApiRequest(
     val tenantId: String,
     val principals: List<String>,
     val query: String,
-    val topK: Int = 8,
+    val topK: Int? = null,
     val filter: Map<String, String> = emptyMap()
 )
 

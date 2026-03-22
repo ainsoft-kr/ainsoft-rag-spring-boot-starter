@@ -81,6 +81,23 @@ class RagControllerTest {
     }
 
     @Test
+    fun `demo sample clear endpoint deletes seeded docs`() {
+        mockMvc.perform(post("/api/rag/demo/load-sample"))
+            .andExpect(status().isOk)
+
+        mockMvc.perform(post("/api/rag/demo/clear-sample"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("cleared"))
+            .andExpect(jsonPath("$.tenantId").value("tenant-web-demo"))
+            .andExpect(jsonPath("$.deletedDocs").value(3))
+            .andExpect(jsonPath("$.deletedChunks").isNumber)
+
+        mockMvc.perform(get("/api/rag/stats").param("tenantId", "tenant-web-demo"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.docs").value(0))
+    }
+
+    @Test
     fun `ingest search and stats endpoints work`() {
         val ingestBody = IngestRequest(
             tenantId = "tenant-demo",

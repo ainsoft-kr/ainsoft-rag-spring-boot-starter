@@ -8,6 +8,9 @@ import com.ainsoft.rag.api.SearchRequest
 import com.ainsoft.rag.api.SearchDiagnostics
 import com.ainsoft.rag.api.UpsertDocumentRequest
 import com.ainsoft.rag.embeddings.EmbeddingProvider
+import com.ainsoft.rag.spring.RagAdminService
+import com.ainsoft.rag.spring.RagAdminWebIngestRequest
+import com.ainsoft.rag.spring.RagAdminWebIngestResponse
 import com.ainsoft.rag.parsers.PlainTextParser
 import com.ainsoft.rag.parsers.TikaDocumentParser
 import com.ainsoft.rag.spring.RagProperties
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import java.io.IOException
 import java.nio.charset.Charset
 import java.time.Instant
 
@@ -33,7 +37,8 @@ class RagController(
     private val properties: RagProperties,
     private val ragConfig: RagConfig,
     private val embeddingProvider: EmbeddingProvider,
-    private val ragAnswerService: RagAnswerService
+    private val ragAnswerService: RagAnswerService,
+    private val adminService: RagAdminService
 ) {
     private val plainTextParser = PlainTextParser()
     private val tikaDocumentParser = TikaDocumentParser()
@@ -53,16 +58,26 @@ class RagController(
                 acl = Acl(request.acl),
                 sourceUri = request.sourceUri,
                 page = request.page,
-                pageMarkers = request.pageMarkers.orEmpty().map {
+                pageMarkers = request.pageMarkers.orEmpty().mapNotNull {
+                    val page = it.page ?: return@mapNotNull null
+                    val offsetStart = it.offsetStart ?: return@mapNotNull null
+                    val offsetEnd = it.offsetEnd ?: return@mapNotNull null
                     PageMarker(
-                        page = it.page,
-                        offsetStart = it.offsetStart,
-                        offsetEnd = it.offsetEnd
+                        page = page,
+                        offsetStart = offsetStart,
+                        offsetEnd = offsetEnd
                     )
                 }
             )
         )
-        return IngestResponse(status = "ingested", tenantId = normalizedTenantId, docId = normalizedDocId)
+        return IngestResponse(
+            status = "ingested",
+            tenantId = normalizedTenantId,
+            docId = normalizedDocId,
+            metadata = request.metadata,
+            sourceUri = request.sourceUri,
+            page = request.page
+        )
     }
 
     @PostMapping(
@@ -113,19 +128,91 @@ class RagController(
                 pageMarkers = parsed.pageMarkers
             )
         )
-        return IngestResponse(status = "ingested", tenantId = normalizedTenantId, docId = normalizedDocId)
+        return IngestResponse(
+            status = "ingested",
+            tenantId = normalizedTenantId,
+            docId = normalizedDocId,
+            sourceUri = parsed.sourceUri,
+            fileName = normalizedFilename ?: file.originalFilename,
+            contentType = contentType,
+            page = parsed.page,
+            metadata = parseMetadata(metadata)
+        )
+    }
+
+    @PostMapping("/site-ingest")
+    fun siteIngest(@RequestBody request: RagAdminWebIngestRequest): RagAdminWebIngestResponse {
+        require(request.urls.isNotEmpty()) { "urls must not be empty" }
+        require(request.acl.isNotEmpty()) { "acl must not be empty" }
+        return adminService.webIngest(role = "DEMO", request = request)
+    }
+
+    @PostMapping(
+        "/site-ingest/stream",
+        produces = [MediaType.TEXT_EVENT_STREAM_VALUE]
+    )
+    fun siteIngestStream(@RequestBody request: RagAdminWebIngestRequest): SseEmitter {
+        require(request.urls.isNotEmpty()) { "urls must not be empty" }
+        require(request.acl.isNotEmpty()) { "acl must not be empty" }
+        val emitter = SseEmitter(0L)
+        try {
+            val effectiveMaxPages = (request.maxPages ?: 25).coerceAtLeast(1)
+            val effectiveMaxDepth = (request.maxDepth ?: 1).coerceAtLeast(0)
+            emitter.send(
+                SseEmitter.event()
+                    .name("meta")
+                    .data(
+                        mapOf(
+                            "message" to "starting site ingest",
+                            "tenantId" to request.tenantId,
+                            "urlCount" to request.urls.size,
+                            "maxPages" to effectiveMaxPages,
+                            "maxDepth" to effectiveMaxDepth,
+                            "incrementalIngest" to request.incrementalIngest
+                        )
+                    )
+            )
+            val response = adminService.webIngest(
+                role = "DEMO",
+                request = request,
+                progressSink = { event ->
+                    emitter.send(
+                        SseEmitter.event()
+                            .name("progress")
+                            .data(event)
+                    )
+                }
+            )
+            emitter.send(
+                SseEmitter.event()
+                    .name("result")
+                    .data(response)
+            )
+            emitter.send(
+                SseEmitter.event()
+                    .name("done")
+                    .data(mapOf("status" to response.status))
+            )
+            emitter.complete()
+        } catch (error: IOException) {
+            emitter.completeWithError(error)
+        } catch (error: Exception) {
+            emitter.completeWithError(error)
+        }
+        return emitter
     }
 
     @PostMapping("/search")
     fun search(@RequestBody request: SearchApiRequest): SearchApiResponse {
         require(request.principals.isNotEmpty()) { "principals must not be empty" }
         require(request.query.isNotBlank()) { "query must not be blank" }
+        val effectiveTopK = request.topK?.coerceAtLeast(1) ?: 8
         val response = engine.searchDetailed(
             SearchRequest(
                 tenantId = request.tenantId,
                 principals = request.principals,
                 query = request.query,
-                topK = request.topK,
+                topK = effectiveTopK,
                 filter = request.filter
             )
         )
@@ -137,8 +224,8 @@ class RagController(
                     sourceUri = hit.source.sourceUri,
                     offsetStart = hit.source.offsetStart,
                     offsetEndExclusive = hit.source.offsetEnd,
-                    context = request.snippetContext,
-                    charsetName = request.sourceCharset,
+                    context = request.snippetContext ?: 160,
+                    charsetName = request.sourceCharset ?: "UTF-8",
                     profileName = request.sourceLoadProfile
                 )
             } else {
@@ -167,7 +254,7 @@ class RagController(
             hits = hitResponses,
             meta = SearchMetaResponse(
                 resultCount = hitResponses.size,
-                requestedTopK = request.topK,
+                requestedTopK = effectiveTopK,
                 principalCount = request.principals.size,
                 aclApplied = true,
                 filterApplied = request.filter.isNotEmpty(),
@@ -203,12 +290,13 @@ class RagController(
     fun answer(@RequestBody request: AnswerApiRequest): AnswerApiResponse {
         require(request.principals.isNotEmpty()) { "principals must not be empty" }
         require(request.query.isNotBlank()) { "query must not be blank" }
+        val effectiveTopK = request.topK?.coerceAtLeast(1) ?: 8
         val searchResponse = engine.searchDetailed(
             SearchRequest(
                 tenantId = request.tenantId,
                 principals = request.principals,
                 query = request.query,
-                topK = request.topK,
+                topK = effectiveTopK,
                 filter = request.filter
             )
         )
@@ -222,12 +310,13 @@ class RagController(
     fun answerStream(@RequestBody request: AnswerApiRequest): SseEmitter {
         val emitter = SseEmitter(0L)
         try {
+            val effectiveTopK = request.topK?.coerceAtLeast(1) ?: 8
             val searchResponse = engine.searchDetailed(
                 SearchRequest(
                     tenantId = request.tenantId,
                     principals = request.principals,
                     query = request.query,
-                    topK = request.topK,
+                    topK = effectiveTopK,
                     filter = request.filter
                 )
             )
@@ -275,19 +364,20 @@ class RagController(
     fun diagnoseSearch(@RequestBody request: SearchApiRequest): SearchDiagnosticsApiResponse {
         require(request.principals.isNotEmpty()) { "principals must not be empty" }
         require(request.query.isNotBlank()) { "query must not be blank" }
+        val effectiveTopK = request.topK?.coerceAtLeast(1) ?: 8
         val searchRequest = SearchRequest(
             tenantId = request.tenantId,
             principals = request.principals,
             query = request.query,
-            topK = request.topK,
+            topK = effectiveTopK,
             filter = request.filter
         )
         val diagnostics = SearchDiagnostics.analyze(
             indexPath = ragConfig.indexPath,
             embeddingProvider = embeddingProvider,
             request = searchRequest,
-            maxSamples = request.diagnosticMaxSamples,
-            scoreThreshold = request.diagnosticScoreThreshold
+            maxSamples = request.diagnosticMaxSamples ?: 5,
+            scoreThreshold = request.diagnosticScoreThreshold ?: Double.NEGATIVE_INFINITY
         )
         val search = engine.searchDetailed(searchRequest)
         val globalProviderHealth = providerTelemetrySnapshot()
@@ -513,6 +603,7 @@ class RagController(
     }
 
     private fun computeEmptyReason(request: SearchApiRequest): String {
+        val effectiveTopK = request.topK?.coerceAtLeast(1) ?: 8
         val diagnostics = SearchDiagnostics.analyze(
             indexPath = ragConfig.indexPath,
             embeddingProvider = embeddingProvider,
@@ -520,7 +611,7 @@ class RagController(
                 tenantId = request.tenantId,
                 principals = request.principals,
                 query = request.query,
-                topK = request.topK,
+                topK = effectiveTopK,
                 filter = request.filter
             )
         )
@@ -533,7 +624,7 @@ class RagController(
                     tenantId = request.tenantId,
                     principals = request.principals,
                     query = request.query,
-                    topK = request.topK,
+                    topK = effectiveTopK,
                     filter = emptyMap()
                 )
             )
@@ -572,31 +663,40 @@ data class IngestRequest(
 )
 
 data class PageMarkerRequest(
-    val page: Int,
-    val offsetStart: Int,
-    val offsetEnd: Int
+    val page: Int? = null,
+    val offsetStart: Int? = null,
+    val offsetEnd: Int? = null
 )
 
 data class IngestResponse(
     val status: String,
     val tenantId: String,
-    val docId: String
+    val docId: String,
+    val message: String? = null,
+    val previousPreview: String? = null,
+    val currentPreview: String? = null,
+    val changeSummary: String? = null,
+    val sourceUri: String? = null,
+    val fileName: String? = null,
+    val contentType: String? = null,
+    val page: Int? = null,
+    val metadata: Map<String, String> = emptyMap()
 )
 
 data class SearchApiRequest(
     val tenantId: String,
     val principals: List<String>,
     val query: String,
-    val topK: Int = 8,
+    val topK: Int? = null,
     val filter: Map<String, String> = emptyMap(),
     val openSource: Boolean = false,
-    val snippetContext: Int = 160,
-    val sourceCharset: String = "UTF-8",
+    val snippetContext: Int? = null,
+    val sourceCharset: String? = null,
     val sourceLoadProfile: String? = null,
     val providerHealthDetail: Boolean = false,
     val recentProviderWindowMillis: Long? = null,
-    val diagnosticScoreThreshold: Double = Double.NEGATIVE_INFINITY,
-    val diagnosticMaxSamples: Int = 5
+    val diagnosticScoreThreshold: Double? = null,
+    val diagnosticMaxSamples: Int? = null
 )
 
 data class SearchApiResponse(

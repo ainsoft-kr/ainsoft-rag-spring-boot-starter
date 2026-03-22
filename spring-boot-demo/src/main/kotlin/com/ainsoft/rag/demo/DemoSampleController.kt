@@ -11,4 +11,7 @@ class DemoSampleController(
 ) {
     @PostMapping("/load-sample")
     fun loadSample(): DemoSampleLoadResponse = sampleDataService.loadSampleData()
+
+    @PostMapping("/clear-sample")
+    fun clearSample(): DemoSampleClearResponse = sampleDataService.clearSampleData()
 }

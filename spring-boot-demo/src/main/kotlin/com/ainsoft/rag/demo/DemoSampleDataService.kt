@@ -17,6 +17,18 @@ class DemoSampleDataService(
 
     fun loadSampleData(): DemoSampleLoadResponse = loadSampleData(status = "loaded")
 
+    fun clearSampleData(): DemoSampleClearResponse {
+        val stats = engine.stats(SAMPLE_TENANT_ID)
+        val deletedChunks = engine.deleteTenant(SAMPLE_TENANT_ID)
+        return DemoSampleClearResponse(
+            status = "cleared",
+            tenantId = SAMPLE_TENANT_ID,
+            deletedDocs = stats.docs,
+            deletedChunks = deletedChunks.toLong(),
+            docIds = SAMPLE_DOCUMENTS.map { it.docId }
+        )
+    }
+
     private fun loadSampleData(status: String): DemoSampleLoadResponse {
         SAMPLE_DOCUMENTS.forEach { document ->
             engine.upsert(
@@ -90,6 +102,14 @@ data class DemoSampleLoadResponse(
     val principals: List<String>,
     val suggestedQuery: String,
     val docIds: List<String>
+)
+
+data class DemoSampleClearResponse(
+    val status: String,
+    val tenantId: String,
+    val deletedDocs: Long,
+    val deletedChunks: Long,
+    val docIds: List<String> = emptyList()
 )
 
 private data class DemoSampleDocument(
