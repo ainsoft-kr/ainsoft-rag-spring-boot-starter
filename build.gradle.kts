@@ -191,7 +191,10 @@ subprojects {
 }
 
 val dokkaProjects = subprojects.filter { project ->
-    project.buildFile.exists() && project.file("src/main").exists()
+    project.buildFile.exists() &&
+        project.file("src/main").exists() &&
+        !project.projectDir.toPath().normalize()
+            .startsWith(layout.projectDirectory.dir("examples").asFile.toPath().normalize())
 }
 
 tasks.named("dokkaHtml").configure {

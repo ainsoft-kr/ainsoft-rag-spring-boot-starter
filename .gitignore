@@ -11,5 +11,5 @@ spring-boot-demo/frontend/build
 spring-boot-demo/frontend/.svelte-kit
 spring-boot-demo/frontend/test-results
 spring-boot-demo/frontend/playwright-report
-spring-boot-demo/rag-index
-spring-boot-demo/src/main/resources/application-local.yml
+examples/spring-boot-demo/rag-index
+examples/spring-boot-demo/src/main/resources/application-local.yml

@@ -1,0 +1,35 @@
+rag:
+  indexPath: ./rag-index
+  embeddingProvider: hash
+  chunkerType: basic
+  contextualRetrievalEnabled: true
+  hierarchicalSummariesEnabled: true
+  queryRewriteEnabled: true
+  correctiveRetrievalEnabled: true
+  admin:
+    enabled: true
+    basePath: /rag-admin
+    apiBasePath: /api/rag/admin
+
+llm:
+  defaultProvider: openai
+  providers:
+    openai:
+      kind: openai-compatible
+      baseUrl: https://api.openai.com/v1
+      apiKey: ${OPENAI_API_KEY:}
+      model: gpt-4o-mini
+    gemini:
+      kind: gemini
+      baseUrl: https://generativelanguage.googleapis.com/v1beta/models
+      apiKey: ${GEMINI_API_KEY:}
+      model: gemini-2.0-flash
+  queryRewrite:
+    provider: openai
+    model: gpt-4o-mini
+  summarizer:
+    provider: openai
+    model: gpt-4o-mini
+  graphExtraction:
+    provider: openai
+    preset: technical

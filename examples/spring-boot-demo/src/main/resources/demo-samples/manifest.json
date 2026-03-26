@@ -1,0 +1,695 @@
+{
+  "documents": [
+    {
+      "docId": "product-overview",
+      "sourceUri": "https://demo.ainsoft.ai/docs/product-overview",
+      "contentPath": "docs/product-overview.md",
+      "metadata": {
+        "category": "개요",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소"
+      }
+    },
+    {
+      "docId": "ops-runbook",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ops-runbook",
+      "contentPath": "docs/ops-runbook.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소"
+      }
+    },
+    {
+      "docId": "retrieval-notes",
+      "sourceUri": "https://demo.ainsoft.ai/docs/retrieval-notes",
+      "contentPath": "docs/retrieval-notes.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-block-assembly-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-block-assembly-work-permit",
+      "contentPath": "docs/ulsan-block-assembly-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "블록조립"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-block-assembly-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-block-assembly-risk-checklist",
+      "contentPath": "docs/ulsan-block-assembly-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "블록조립"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-block-assembly-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-block-assembly-toolbox-meeting",
+      "contentPath": "docs/ulsan-block-assembly-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "블록조립"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-block-assembly-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-block-assembly-incident-log",
+      "contentPath": "docs/ulsan-block-assembly-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "블록조립"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-block-assembly-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-block-assembly-graph-brief",
+      "contentPath": "docs/ulsan-block-assembly-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "블록조립"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-painting-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-painting-work-permit",
+      "contentPath": "docs/ulsan-painting-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도장작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-painting-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-painting-risk-checklist",
+      "contentPath": "docs/ulsan-painting-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도장작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-painting-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-painting-toolbox-meeting",
+      "contentPath": "docs/ulsan-painting-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도장작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-painting-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-painting-incident-log",
+      "contentPath": "docs/ulsan-painting-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도장작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-painting-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-painting-graph-brief",
+      "contentPath": "docs/ulsan-painting-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도장작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-welding-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-welding-work-permit",
+      "contentPath": "docs/ulsan-welding-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "용접작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-welding-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-welding-risk-checklist",
+      "contentPath": "docs/ulsan-welding-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "용접작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-welding-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-welding-toolbox-meeting",
+      "contentPath": "docs/ulsan-welding-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "용접작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-welding-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-welding-incident-log",
+      "contentPath": "docs/ulsan-welding-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "용접작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-welding-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-welding-graph-brief",
+      "contentPath": "docs/ulsan-welding-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "용접작업"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-lift-plan-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-lift-plan-work-permit",
+      "contentPath": "docs/ulsan-lift-plan-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "중량물인양"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-lift-plan-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-lift-plan-risk-checklist",
+      "contentPath": "docs/ulsan-lift-plan-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "중량물인양"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-lift-plan-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-lift-plan-toolbox-meeting",
+      "contentPath": "docs/ulsan-lift-plan-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "중량물인양"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-lift-plan-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-lift-plan-incident-log",
+      "contentPath": "docs/ulsan-lift-plan-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "중량물인양"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-lift-plan-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-lift-plan-graph-brief",
+      "contentPath": "docs/ulsan-lift-plan-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "중량물인양"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-confined-space-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-confined-space-work-permit",
+      "contentPath": "docs/ulsan-confined-space-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "밀폐공간점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-confined-space-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-confined-space-risk-checklist",
+      "contentPath": "docs/ulsan-confined-space-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "밀폐공간점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-confined-space-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-confined-space-toolbox-meeting",
+      "contentPath": "docs/ulsan-confined-space-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "밀폐공간점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-confined-space-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-confined-space-incident-log",
+      "contentPath": "docs/ulsan-confined-space-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "밀폐공간점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-confined-space-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-confined-space-graph-brief",
+      "contentPath": "docs/ulsan-confined-space-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "밀폐공간점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-engine-install-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-engine-install-work-permit",
+      "contentPath": "docs/ulsan-engine-install-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "엔진설치"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-engine-install-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-engine-install-risk-checklist",
+      "contentPath": "docs/ulsan-engine-install-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "엔진설치"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-engine-install-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-engine-install-toolbox-meeting",
+      "contentPath": "docs/ulsan-engine-install-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "엔진설치"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-engine-install-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-engine-install-incident-log",
+      "contentPath": "docs/ulsan-engine-install-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "엔진설치"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-engine-install-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-engine-install-graph-brief",
+      "contentPath": "docs/ulsan-engine-install-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "엔진설치"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-electrical-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-electrical-work-permit",
+      "contentPath": "docs/ulsan-electrical-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "전장배선"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-electrical-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-electrical-risk-checklist",
+      "contentPath": "docs/ulsan-electrical-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "전장배선"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-electrical-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-electrical-toolbox-meeting",
+      "contentPath": "docs/ulsan-electrical-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "전장배선"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-electrical-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-electrical-incident-log",
+      "contentPath": "docs/ulsan-electrical-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "전장배선"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-electrical-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-electrical-graph-brief",
+      "contentPath": "docs/ulsan-electrical-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "전장배선"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-dock-check-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-dock-check-work-permit",
+      "contentPath": "docs/ulsan-dock-check-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도크점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-dock-check-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-dock-check-risk-checklist",
+      "contentPath": "docs/ulsan-dock-check-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도크점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-dock-check-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-dock-check-toolbox-meeting",
+      "contentPath": "docs/ulsan-dock-check-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도크점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-dock-check-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-dock-check-incident-log",
+      "contentPath": "docs/ulsan-dock-check-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도크점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-dock-check-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-dock-check-graph-brief",
+      "contentPath": "docs/ulsan-dock-check-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "도크점검"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-quality-audit-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-quality-audit-work-permit",
+      "contentPath": "docs/ulsan-quality-audit-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "품질감사"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-quality-audit-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-quality-audit-risk-checklist",
+      "contentPath": "docs/ulsan-quality-audit-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "품질감사"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-quality-audit-toolbox-meeting",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-quality-audit-toolbox-meeting",
+      "contentPath": "docs/ulsan-quality-audit-toolbox-meeting.md",
+      "metadata": {
+        "category": "회의",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "품질감사"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-quality-audit-incident-log",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-quality-audit-incident-log",
+      "contentPath": "docs/ulsan-quality-audit-incident-log.md",
+      "metadata": {
+        "category": "운영",
+        "surface": "대시보드",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "품질감사"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-quality-audit-graph-brief",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-quality-audit-graph-brief",
+      "contentPath": "docs/ulsan-quality-audit-graph-brief.md",
+      "metadata": {
+        "category": "설계",
+        "surface": "그래프",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "품질감사"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-launch-prep-work-permit",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-launch-prep-work-permit",
+      "contentPath": "docs/ulsan-launch-prep-work-permit.md",
+      "metadata": {
+        "category": "허가",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "진수준비"
+      }
+    }
+    ,
+    {
+      "docId": "ulsan-launch-prep-risk-checklist",
+      "sourceUri": "https://demo.ainsoft.ai/docs/ulsan-launch-prep-risk-checklist",
+      "contentPath": "docs/ulsan-launch-prep-risk-checklist.md",
+      "metadata": {
+        "category": "점검",
+        "surface": "포털",
+        "topic": "검색그래프",
+        "domain": "조선소",
+        "yard": "울산조선소",
+        "scenario": "진수준비"
+      }
+    }
+  ]
+}
