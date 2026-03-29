@@ -32,7 +32,7 @@ class DemoSampleDataService(
             tenantId = SAMPLE_TENANT_ID,
             deletedDocs = stats.docs,
             deletedChunks = deletedChunks,
-            docIds = SAMPLE_DOCUMENTS.map { it.docId }
+            docIds = emptyList()
         )
     }
 
@@ -67,7 +67,7 @@ class DemoSampleDataService(
 
     companion object {
         const val SAMPLE_TENANT_ID = "tenant-web-demo"
-        const val SAMPLE_DOCUMENT_COUNT = 50
+        const val SAMPLE_DOCUMENT_COUNT = 49
         const val SAMPLE_SUGGESTED_QUERY = "하이브리드 검색"
         val SAMPLE_PRINCIPALS = listOf("group:demo")
 

@@ -5,7 +5,7 @@ demo:
   seedEnabled: true
 
 llm:
-  defaultProvider: openai
+  defaultProvider: gemini
   providers:
     openai:
       kind: openai-compatible
@@ -35,7 +35,13 @@ rag:
   uploadMaxBytes: 10485760
   sourceLoadTimeoutMillis: 10000
   chunkerType: basic
-  embeddingDimensions: 256
+  queryRewriteEnabled: true
+  queryRewriterType: llm
+  correctiveRetrievalEnabled: true
+  embeddingProvider: google
+  embeddingDimensions: 768
+  googleModel: gemini-embedding-001
+  googleApiKey: ${GEMINI_API_KEY:}
   graphProvider: falkordb
   graphFalkorHost: ${FALKORDB_HOST:127.0.0.1}
   graphFalkorPort: ${FALKORDB_PORT:6379}

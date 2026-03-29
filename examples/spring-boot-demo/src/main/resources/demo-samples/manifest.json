@@ -21,17 +21,6 @@
         "topic": "검색그래프",
         "domain": "조선소"
       }
-    },
-    {
-      "docId": "retrieval-notes",
-      "sourceUri": "https://demo.ainsoft.ai/docs/retrieval-notes",
-      "contentPath": "docs/retrieval-notes.md",
-      "metadata": {
-        "category": "설계",
-        "surface": "그래프",
-        "topic": "검색그래프",
-        "domain": "조선소"
-      }
     }
     ,
     {

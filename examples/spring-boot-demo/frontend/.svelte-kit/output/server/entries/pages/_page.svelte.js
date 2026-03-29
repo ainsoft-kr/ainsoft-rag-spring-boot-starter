@@ -243,15 +243,21 @@ function _page($$renderer, $$props) {
 			$$renderer.push(`<meta name="description" content="Spring Boot static hosting demo for Ainsoft RAG with a SvelteKit frontend."/>`);
 		});
 		$$renderer.push(`<div class="shell svelte-1uha8ag" data-testid="demo-shell"><div class="ambient ambient-left svelte-1uha8ag"></div> <div class="ambient ambient-right svelte-1uha8ag"></div> <section class="hero svelte-1uha8ag"><div class="hero-copy svelte-1uha8ag"><p class="eyebrow svelte-1uha8ag">AINSOFT RAG SPRING BOOT DEMO</p> <h1 class="svelte-1uha8ag">색인, 검색, 진단을 테스트하기 위한 데모사이트 입니다.</h1> <p class="lede svelte-1uha8ag">이 화면은 Spring Boot가 직접 제공하는 정적 파일입니다. 문서 색인, 파일 업로드, 검색,
-        진단, 제공자 상태를 즉시 검증할 수 있습니다.</p> <div class="sample-banner svelte-1uha8ag" data-testid="sample-banner"><div><span class="sample-label svelte-1uha8ag">Sample Tenant</span> <strong class="svelte-1uha8ag">${escape_html(sampleResponse.tenantId)}</strong></div> <div><span class="sample-label svelte-1uha8ag">Suggested Query</span> <strong class="svelte-1uha8ag">${escape_html(sampleResponse.suggestedQuery)}</strong></div> <button data-testid="clear-sample-button"${attr("disabled", loading.sample, true)} class="svelte-1uha8ag">${escape_html(loading.sample ? "처리 중..." : "Clear Data")}</button></div> `);
+        진단, 제공자 상태를 즉시 검증할 수 있습니다.</p> <div class="sample-banner svelte-1uha8ag" data-testid="sample-banner"><div><span class="sample-label svelte-1uha8ag">Sample Tenant</span> <strong class="svelte-1uha8ag">${escape_html(sampleResponse.tenantId)}</strong></div> <div><span class="sample-label svelte-1uha8ag">Suggested Query</span> <strong class="svelte-1uha8ag">${escape_html(sampleResponse.suggestedQuery)}</strong></div> <div class="button-row svelte-1uha8ag"><button data-testid="load-sample-button"${attr("disabled", loading.sample, true)} class="svelte-1uha8ag">${escape_html(loading.sample ? "처리 중..." : "Load Data")}</button> <button data-testid="clear-sample-button"${attr("disabled", loading.sample, true)} class="svelte-1uha8ag">${escape_html(loading.sample ? "처리 중..." : "Clear Data")}</button></div></div> `);
 		$$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--> `);
+		$$renderer.push(`<!--]--></div> <div class="hero-stats-container svelte-1uha8ag"><div class="hero-stats svelte-1uha8ag"><!--[-->`);
+		const each_array = ensure_array_like(statCards);
+		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+			let card = each_array[$$index];
+			$$renderer.push(`<article class="stat-card svelte-1uha8ag"${attr("data-testid", `stat-${card.label.toLowerCase().replace(/\s+/g, "-")}`)}><span class="svelte-1uha8ag">${escape_html(card.label)}</span> <strong class="svelte-1uha8ag">${escape_html(card.value())}</strong> <small class="svelte-1uha8ag">${escape_html(card.helper)}</small></article>`);
+		}
+		$$renderer.push(`<!--]--></div> `);
 		if (sampleResponse.docIds.length) {
 			$$renderer.push("<!--[0-->");
-			$$renderer.push(`<p class="muted">샘플 문서 ${escape_html(sampleResponse.docIds.length)}개가 준비되어 있습니다.</p> <div class="chip-field compact svelte-1uha8ag"><!--[-->`);
-			const each_array = ensure_array_like(sampleDocPreview(sampleResponse.docIds));
-			for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-				let docId = each_array[$$index];
+			$$renderer.push(`<div class="hero-sample-docs svelte-1uha8ag"><p class="muted svelte-1uha8ag">샘플 문서 ${escape_html(sampleResponse.docIds.length)}개가 준비되어 있습니다.</p> <div class="chip-field compact svelte-1uha8ag"><!--[-->`);
+			const each_array_1 = ensure_array_like(sampleDocPreview(sampleResponse.docIds));
+			for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
+				let docId = each_array_1[$$index_1];
 				$$renderer.push(`<span class="svelte-1uha8ag">${escape_html(docId)}</span>`);
 			}
 			$$renderer.push(`<!--]--> `);
@@ -259,16 +265,10 @@ function _page($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				$$renderer.push(`<span class="svelte-1uha8ag">외 ${escape_html(sampleResponse.docIds.length - sampleDocPreviewLimit)}개</span>`);
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></div>`);
+			$$renderer.push(`<!--]--></div></div>`);
 		} else {
 			$$renderer.push("<!--[-1-->");
-			$$renderer.push(`<p class="empty sample-empty svelte-1uha8ag">${escape_html(sampleResponse.status === "cleared" ? "샘플 데이터가 삭제되었습니다." : "샘플 데이터가 비어 있습니다.")}</p>`);
-		}
-		$$renderer.push(`<!--]--></div> <div class="hero-stats svelte-1uha8ag"><!--[-->`);
-		const each_array_1 = ensure_array_like(statCards);
-		for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
-			let card = each_array_1[$$index_1];
-			$$renderer.push(`<article class="stat-card svelte-1uha8ag"${attr("data-testid", `stat-${card.label.toLowerCase().replace(/\s+/g, "-")}`)}><span class="svelte-1uha8ag">${escape_html(card.label)}</span> <strong class="svelte-1uha8ag">${escape_html(card.value())}</strong> <small class="svelte-1uha8ag">${escape_html(card.helper)}</small></article>`);
+			$$renderer.push(`<div class="hero-sample-docs svelte-1uha8ag"><p class="empty sample-empty svelte-1uha8ag">${escape_html(sampleResponse.status === "cleared" ? "샘플 데이터가 삭제되었습니다." : "샘플 데이터가 비어 있습니다.")}</p></div>`);
 		}
 		$$renderer.push(`<!--]--></div></section> `);
 		if (notifications.length) {
@@ -360,7 +360,7 @@ function _page($$renderer, $$props) {
 			$$renderer.push(`<!--]--></article></div></div>`);
 		} else if (activeTab === "search") {
 			$$renderer.push("<!--[3-->");
-			$$renderer.push(`<div class="tab-layout search-layout svelte-1uha8ag"><div class="controls svelte-1uha8ag"><article class="panel svelte-1uha8ag"><div class="panel-header svelte-1uha8ag"><h2 class="svelte-1uha8ag">검색과 진단</h2> <div class="button-row svelte-1uha8ag"><button data-testid="search-submit"${attr("disabled", loading.search || !searchFormValid, true)} class="svelte-1uha8ag">${escape_html(loading.search ? "검색 중..." : "Search")}</button> <button data-testid="answer-submit"${attr("disabled", loading.answer || !searchFormValid, true)} class="svelte-1uha8ag">${escape_html(loading.answer ? "생성 중..." : "Answer")}</button> <button class="ghost svelte-1uha8ag" data-testid="answer-stream-submit"${attr("disabled", loading.answerStream || !searchFormValid, true)}>${escape_html(loading.answerStream ? "스트리밍 중..." : "Stream")}</button> <button class="ghost svelte-1uha8ag" data-testid="diagnose-submit"${attr("disabled", loading.diagnose || !searchFormValid, true)}>${escape_html(loading.diagnose ? "진단 중..." : "Diagnose")}</button></div></div> <div class="grid two svelte-1uha8ag"><label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Tenant</span> <input${attr("value", searchForm.tenantId)} data-testid="search-tenant" class="svelte-1uha8ag"/></label> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Top K</span> <input${attr("value", searchForm.topK)} min="1" max="20" required="" type="number" class="svelte-1uha8ag"/></label></div> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Principals</span> <input${attr("value", searchForm.principals)} data-testid="search-principals" class="svelte-1uha8ag"/></label> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Query</span> <input${attr("value", searchForm.query)} data-testid="search-query" class="svelte-1uha8ag"/></label> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Metadata Filter (\`key=value\`, one per line)</span> <textarea rows="3" class="svelte-1uha8ag">`);
+			$$renderer.push(`<div class="tab-layout search-layout svelte-1uha8ag"><div class="controls svelte-1uha8ag"><article class="panel svelte-1uha8ag"><div class="panel-header svelte-1uha8ag"><h2 class="svelte-1uha8ag">검색과 진단</h2></div> <div class="grid four search-actions svelte-1uha8ag"><button data-testid="search-submit"${attr("disabled", loading.search || !searchFormValid, true)} class="svelte-1uha8ag">${escape_html(loading.search ? "검색 중..." : "Search")}</button> <button data-testid="answer-submit"${attr("disabled", loading.answer || !searchFormValid, true)} class="svelte-1uha8ag">${escape_html(loading.answer ? "생성 중..." : "Answer")}</button> <button class="ghost svelte-1uha8ag" data-testid="answer-stream-submit"${attr("disabled", loading.answerStream || !searchFormValid, true)}>${escape_html(loading.answerStream ? "스트리밍 중..." : "Stream")}</button> <button class="ghost svelte-1uha8ag" data-testid="diagnose-submit"${attr("disabled", loading.diagnose || !searchFormValid, true)}>${escape_html(loading.diagnose ? "진단 중..." : "Diagnose")}</button></div> <div class="grid two svelte-1uha8ag"><label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Tenant</span> <input${attr("value", searchForm.tenantId)} data-testid="search-tenant" class="svelte-1uha8ag"/></label> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Top K</span> <input${attr("value", searchForm.topK)} min="1" max="20" required="" type="number" class="svelte-1uha8ag"/></label></div> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Principals</span> <input${attr("value", searchForm.principals)} data-testid="search-principals" class="svelte-1uha8ag"/></label> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Query</span> <input${attr("value", searchForm.query)} data-testid="search-query" class="svelte-1uha8ag"/></label> <label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Metadata Filter (\`key=value\`, one per line)</span> <textarea rows="3" class="svelte-1uha8ag">`);
 			const $$body_7 = escape_html(searchForm.filter);
 			if ($$body_7) $$renderer.push(`${$$body_7}`);
 			$$renderer.push(`</textarea></label> <div class="grid two compact svelte-1uha8ag"><label class="svelte-1uha8ag"><span class="svelte-1uha8ag">Provider Window (ms)</span> <input${attr("value", searchForm.recentProviderWindowMillis)} required="" type="number" min="0" class="svelte-1uha8ag"/></label> <label class="checkbox svelte-1uha8ag"><span class="svelte-1uha8ag">Open Source Snippet</span> <input${attr("checked", searchForm.openSource, true)} type="checkbox" class="svelte-1uha8ag"/></label></div></article></div> <div class="results svelte-1uha8ag"><article class="panel result-panel svelte-1uha8ag" data-testid="answer-panel"><div class="panel-header svelte-1uha8ag"><h2 class="svelte-1uha8ag">답변</h2> <span class="pill svelte-1uha8ag">${escape_html(answerResponse?.schemaVersion ?? "idle")}</span></div> `);

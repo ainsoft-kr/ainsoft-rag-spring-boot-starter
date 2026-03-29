@@ -476,12 +476,10 @@
       tenantId: response.tenantId,
       principals: [],
       suggestedQuery: '하이브리드 검색',
-      docIds: [],
+      docIds: response.docIds ?? [],
       status: response.status
     };
-    if (statsTenantId === response.tenantId) {
-      statsTenantId = response.tenantId;
-    }
+    statsTenantId = response.tenantId;
     ingestForm = {
       ...ingestForm,
       tenantId: response.tenantId
@@ -505,6 +503,14 @@
     await Promise.all([refreshStats(), refreshHealth()]);
     activeTab = 'search';
     await submitSearch();
+  }
+
+  async function checkSampleSync() {
+    if (statsResponse && statsResponse.tenantId === sampleDefaults.tenantId) {
+      if (statsResponse.docs === 0 && sampleResponse.docIds.length > 0) {
+        applySampleClear({ tenantId: sampleDefaults.tenantId, status: 'cleared', docIds: [] });
+      }
+    }
   }
 
   async function clearSampleData() {
@@ -736,6 +742,7 @@
 
   onMount(async () => {
     await Promise.allSettled([refreshStats(), refreshHealth()]);
+    await checkSampleSync();
     await Promise.allSettled([submitSearch()]);
   });
 
@@ -792,13 +799,22 @@
           <span class="sample-label">Suggested Query</span>
           <strong>{sampleResponse.suggestedQuery}</strong>
         </div>
-        <button
-          data-testid="clear-sample-button"
-          disabled={loading.sample}
-          on:click={() => (clearSampleConfirmOpen = true)}
-        >
-          {loading.sample ? '처리 중...' : 'Clear Data'}
-        </button>
+        <div class="button-row">
+          <button
+            data-testid="load-sample-button"
+            disabled={loading.sample}
+            on:click={loadSampleData}
+          >
+            {loading.sample ? '처리 중...' : 'Load Data'}
+          </button>
+          <button
+            data-testid="clear-sample-button"
+            disabled={loading.sample}
+            on:click={() => (clearSampleConfirmOpen = true)}
+          >
+            {loading.sample ? '처리 중...' : 'Clear Data'}
+          </button>
+        </div>
       </div>
 
       {#if clearSampleConfirmOpen}
@@ -815,32 +831,38 @@
           </div>
         </div>
       {/if}
-
-      {#if sampleResponse.docIds.length}
-        <p class="muted">샘플 문서 {sampleResponse.docIds.length}개가 준비되어 있습니다.</p>
-        <div class="chip-field compact">
-          {#each sampleDocPreview(sampleResponse.docIds) as docId}
-            <span>{docId}</span>
-          {/each}
-          {#if sampleResponse.docIds.length > sampleDocPreviewLimit}
-            <span>외 {sampleResponse.docIds.length - sampleDocPreviewLimit}개</span>
-          {/if}
-        </div>
-      {:else}
-        <p class="empty sample-empty">
-          {sampleResponse.status === 'cleared' ? '샘플 데이터가 삭제되었습니다.' : '샘플 데이터가 비어 있습니다.'}
-        </p>
-      {/if}
     </div>
 
-    <div class="hero-stats">
-      {#each statCards as card}
-        <article class="stat-card" data-testid={`stat-${card.label.toLowerCase().replace(/\s+/g, '-')}`}>
-          <span>{card.label}</span>
-          <strong>{card.value()}</strong>
-          <small>{card.helper}</small>
-        </article>
-      {/each}
+    <div class="hero-stats-container">
+      <div class="hero-stats">
+        {#each statCards as card}
+          <article class="stat-card" data-testid={`stat-${card.label.toLowerCase().replace(/\s+/g, '-')}`}>
+            <span>{card.label}</span>
+            <strong>{card.value()}</strong>
+            <small>{card.helper}</small>
+          </article>
+        {/each}
+      </div>
+
+      {#if sampleResponse.docIds.length}
+        <div class="hero-sample-docs">
+          <p class="muted">샘플 문서 {sampleResponse.docIds.length}개가 준비되어 있습니다.</p>
+          <div class="chip-field compact">
+            {#each sampleDocPreview(sampleResponse.docIds) as docId}
+              <span>{docId}</span>
+            {/each}
+            {#if sampleResponse.docIds.length > sampleDocPreviewLimit}
+              <span>외 {sampleResponse.docIds.length - sampleDocPreviewLimit}개</span>
+            {/if}
+          </div>
+        </div>
+      {:else}
+        <div class="hero-sample-docs">
+          <p class="empty sample-empty">
+            {sampleResponse.status === 'cleared' ? '샘플 데이터가 삭제되었습니다.' : '샘플 데이터가 비어 있습니다.'}
+          </p>
+        </div>
+      {/if}
     </div>
   </section>
 
@@ -1389,38 +1411,39 @@
           <article class="panel">
             <div class="panel-header">
               <h2>검색과 진단</h2>
-              <div class="button-row">
-                <button
-                  data-testid="search-submit"
-                  disabled={loading.search || !searchFormValid}
-                  on:click={submitSearch}
-                >
-                  {loading.search ? '검색 중...' : 'Search'}
-                </button>
-                <button
-                  data-testid="answer-submit"
-                  disabled={loading.answer || !searchFormValid}
-                  on:click={submitAnswer}
-                >
-                  {loading.answer ? '생성 중...' : 'Answer'}
-                </button>
-                <button
-                  class="ghost"
-                  data-testid="answer-stream-submit"
-                  disabled={loading.answerStream || !searchFormValid}
-                  on:click={submitAnswerStream}
-                >
-                  {loading.answerStream ? '스트리밍 중...' : 'Stream'}
-                </button>
-                <button
-                  class="ghost"
-                  data-testid="diagnose-submit"
-                  disabled={loading.diagnose || !searchFormValid}
-                  on:click={runDiagnostics}
-                >
-                  {loading.diagnose ? '진단 중...' : 'Diagnose'}
-                </button>
-              </div>
+            </div>
+
+            <div class="grid four search-actions">
+              <button
+                data-testid="search-submit"
+                disabled={loading.search || !searchFormValid}
+                on:click={submitSearch}
+              >
+                {loading.search ? '검색 중...' : 'Search'}
+              </button>
+              <button
+                data-testid="answer-submit"
+                disabled={loading.answer || !searchFormValid}
+                on:click={submitAnswer}
+              >
+                {loading.answer ? '생성 중...' : 'Answer'}
+              </button>
+              <button
+                class="ghost"
+                data-testid="answer-stream-submit"
+                disabled={loading.answerStream || !searchFormValid}
+                on:click={submitAnswerStream}
+              >
+                {loading.answerStream ? '스트리밍 중...' : 'Stream'}
+              </button>
+              <button
+                class="ghost"
+                data-testid="diagnose-submit"
+                disabled={loading.diagnose || !searchFormValid}
+                on:click={runDiagnostics}
+              >
+                {loading.diagnose ? '진단 중...' : 'Diagnose'}
+              </button>
             </div>
 
             <div class="grid two">
@@ -1775,16 +1798,16 @@
   .notices-shell {
     position: relative;
     z-index: 1;
-    max-width: 1440px;
+    max-width: 1152px;
     margin: 0 auto;
   }
 
   .hero {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 18px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
     margin-bottom: 12px;
-    align-items: start;
+    align-items: stretch;
     animation: rise 500ms ease-out both;
   }
 
@@ -1793,22 +1816,25 @@
   .panel,
   .notice {
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 24px 80px rgba(5, 16, 25, 0.12);
+    box-shadow: 0 16px 48px rgba(5, 16, 25, 0.08);
     backdrop-filter: blur(14px);
   }
 
   .hero-copy {
-    padding: 20px 22px;
-    border-radius: 28px;
+    padding: 14px 16px;
+    border-radius: 20px;
     background: rgba(7, 18, 27, 0.76);
     color: #f8f1e7;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .eyebrow {
-    margin: 0 0 14px;
+    margin: 0 0 6px;
     color: #f9c76d;
-    font-size: 0.78rem;
-    letter-spacing: 0.22em;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
   }
 
   h1,
@@ -1819,76 +1845,109 @@
 
   h1 {
     margin: 0;
-    font-size: clamp(1.8rem, 3.4vw, 3rem);
-    line-height: 0.98;
+    font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+    line-height: 1.1;
   }
 
   .lede {
     max-width: 62ch;
-    margin: 10px 0 0;
-    font-size: 0.96rem;
+    margin: 4px 0 0;
+    font-size: 0.84rem;
     color: rgba(248, 241, 231, 0.82);
-    line-height: 1.5;
+    line-height: 1.4;
   }
 
   .sample-banner {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    align-items: end;
-    margin-top: 12px;
-    padding: 12px 14px;
-    border-radius: 18px;
-    background: rgba(248, 241, 231, 0.12);
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: rgba(248, 241, 231, 0.06);
+  }
+
+  .sample-banner .button-row {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .sample-banner button {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 0.84rem;
   }
 
   .sample-confirm {
     display: grid;
-    gap: 14px;
-    margin-top: 12px;
-    padding: 16px 18px;
-    border-radius: 18px;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
     background: rgba(255, 214, 214, 0.14);
     border: 1px solid rgba(255, 214, 214, 0.24);
   }
 
   .sample-confirm p {
-    margin: 6px 0 0;
+    margin: 2px 0 0;
     color: rgba(248, 241, 231, 0.78);
   }
 
   .sample-label {
     display: block;
     color: rgba(248, 241, 231, 0.68);
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
   .sample-banner strong {
     display: block;
-    margin-top: 4px;
-    font-size: 0.98rem;
+    margin-top: 2px;
+    font-size: 0.88rem;
+  }
+
+  .hero-stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-self: stretch;
+    justify-content: center;
   }
 
   .hero-stats {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
     align-content: stretch;
-    align-self: stretch;
-    height: 100%;
+    flex-shrink: 0;
+  }
+
+  .hero-sample-docs {
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: rgba(7, 18, 27, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .hero-sample-docs .muted {
+    margin: 0 0 6px;
+    color: rgba(248, 241, 231, 0.62);
+    font-size: 0.72rem;
   }
 
   .stat-card {
-    padding: 14px 16px;
-    border-radius: 24px;
+    padding: 10px 8px;
+    border-radius: 16px;
     background: rgba(248, 241, 231, 0.84);
     animation: rise 650ms ease-out both;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     min-height: 0;
   }
 
@@ -1898,21 +1957,25 @@
   .definition-list dt {
     display: block;
     color: #51606d;
-    font-size: 0.82rem;
-    letter-spacing: 0.06em;
+    font-size: 0.64rem;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
   }
 
   .stat-card strong {
     display: block;
-    margin: 6px 0 2px;
-    font-size: 1.55rem;
+    margin: 2px 0;
+    font-size: 1.25rem;
     color: #0f1720;
+    line-height: 1;
   }
 
   .stat-card small {
-    font-size: 0.82rem;
-    line-height: 1.35;
+    display: none;
   }
 
   .notices {
@@ -2003,13 +2066,13 @@
 
   .tab-layout {
     display: grid;
-    grid-template-columns: 0.95fr 1.05fr;
+    grid-template-columns: 1fr 1fr;
     gap: 22px;
     align-items: stretch;
   }
 
   .tab-layout.search-layout {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 2.2fr);
   }
 
   .controls,
@@ -2065,6 +2128,19 @@
 
   .grid.two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid.four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .search-actions {
+    margin-bottom: 20px;
+  }
+
+  .search-actions button {
+    padding: 10px 8px;
+    font-size: 0.88rem;
   }
 
   .grid.compact {
@@ -2402,9 +2478,10 @@
   .chip-field span {
     padding: 7px 10px;
     border-radius: 999px;
-    background: rgba(17, 27, 38, 0.08);
-    color: #1b3244;
+    background: rgba(248, 241, 231, 0.16);
+    color: #ffffff;
     font-size: 0.84rem;
+    border: 1px solid rgba(248, 241, 231, 0.1);
   }
 
   @keyframes rise {
