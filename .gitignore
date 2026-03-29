@@ -13,3 +13,4 @@ spring-boot-demo/frontend/test-results
 spring-boot-demo/frontend/playwright-report
 examples/spring-boot-demo/rag-index
 examples/spring-boot-demo/src/main/resources/application-local.yml
+.env
