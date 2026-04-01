@@ -28,9 +28,20 @@ llm:
   summarizer:
     provider: openai
     model: gpt-4o-mini
+  agenticSearch:
+    provider: gemini
+    model: gemini-2.0-flash
 
 rag:
   indexPath: ./rag-index
+  search:
+    agentic:
+      enabled: true
+      maxDocsToExplore: 3
+      maxChunksPerDoc: 5
+    vector:
+      enabled: true
+      useHybrid: true
   storeChunkText: true
   uploadMaxBytes: 10485760
   sourceLoadTimeoutMillis: 10000
